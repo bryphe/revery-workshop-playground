@@ -78,8 +78,13 @@ class proxyImageNode (src) = {
     super#removeChild(child);
   };
   pub! setSrc = src => {
+    print_endline ("WORKER - set src: " ++ (src));
     queueUpdate(SetImageSrc(super#getInternalId(), src));
     super#setSrc(src);
+  };
+  pub! setResizeMode = rm => {
+    queueUpdate(SetImageResizeMode(super#getInternalId(), rm));
+    super#setResizeMode(rm);
   };
   initializer {
     queueUpdate(NewNode(super#getInternalId(), Image));
@@ -109,7 +114,7 @@ let getNodeById = id => {
   };
 };
 
-let proxyNodeFactory: Revery.UI.Internal.PrimitiveNodeFactory.nodeFactory = {
+let proxyNodeFactory: Revery.UI.PrimitiveNodeFactory.nodeFactory = {
   createViewNode: () => {
     let ret = (new proxyViewNode)();
     registerNode(ret);
@@ -127,7 +132,7 @@ let proxyNodeFactory: Revery.UI.Internal.PrimitiveNodeFactory.nodeFactory = {
   },
 };
 
-Revery.UI.Internal.PrimitiveNodeFactory.set(proxyNodeFactory);
+Revery.UI.PrimitiveNodeFactory.set(proxyNodeFactory);
 
 let sendMessage = msg => {
   Worker.post_message(msg);
@@ -165,14 +170,19 @@ let setRenderFunction = fn => {
   dirty := true;
 };
 
-let start = exec => {
+let start = (exec, complete) => {
   let mouseCursor = Revery_UI.Mouse.Cursor.make();
+
+  sendMessage(Protocol.ToRenderer.Initialized);
 
   Worker.set_onmessage((updates: Protocol.ToWorker.t) =>
     switch (updates) {
+    | RequestCompletions(id, str) =>
+      let completions = complete(str);
+      sendMessage(Protocol.ToRenderer.Completions(id, completions));
     | SourceCodeUpdated(v) =>
-      log("got source code update");
-      sendMessage(Protocol.ToRenderer.Compiling);
+      let evalId = Repl.Evaluate.getNextEvalId();
+      sendMessage(Protocol.ToRenderer.Compiling(evalId));
       let code = Js.to_string(v);
       latestCode := Some(code);
       let send = r => sendMessage(Protocol.ToRenderer.PhraseResult(r));
@@ -197,7 +207,6 @@ let start = exec => {
     | MouseEvent(me) => Revery_UI.Mouse.dispatch(mouseCursor, me, rootNode)
     | KeyboardEvent(ke) => Revery_UI.Keyboard.dispatch(ke)
     | SetSyntax(v) =>
-      print_endline("Got SetSyntax event!");
       switch (v) {
       | ML => Repl.SyntaxControl.ml()
       | RE => Repl.SyntaxControl.re()
@@ -216,7 +225,6 @@ let start = exec => {
     }
   );
 
-  log("Initialized");
   sendMessage(Protocol.ToRenderer.Ready);
 
   () => {
