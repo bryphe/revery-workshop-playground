@@ -48,7 +48,7 @@ let convertSyntax = (filePath) => {
 
 let reveryRoot = getReveryRoot();
 console.log ("Revery root: " + reveryRoot);
-let reveryExampleSources = path.join(reveryRoot, "examples");
+let reveryExampleSources = path.join(__dirname, "examples");
 
 let getShortCommit = () => {
     let result = cp.execSync("git rev-parse --short HEAD");
@@ -89,11 +89,7 @@ const filesToCopyToRoot = [
 ];
 
 const examplesToCopy = [
-    "Hello",
-    "Calculator",
-    "HoverExample",
-    "BoxShadow",
-    "Flexbox"
+    "1-intro",
 ];
 
 let artifactFolder = getBuildArtifactFolder();
