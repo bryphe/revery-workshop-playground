@@ -17,9 +17,13 @@
 <div class="root">
 
 <div id="loading-container">
+	<div class="loading-background"></div>
     <div class="loading-inner">
         <img src="revery-logo.png" />
         <p class="text">Compiling...</p>
+	    <div class="progress-container">
+			<div id="progress-bar"></div>
+		</div>
     </div>
 </div>	
 
@@ -31,82 +35,5 @@
 
 </body>
 <script src="Renderer.bc.js"></script>
-    <script>
-
-    let clearErrors = () => {
-        errors = [];
-        let errorContainer = document.getElementById("error-container");
-        errorContainer.classList.remove("errors");
-        window.parent.postMessage({
-            type: "errors.clear", 
-        });
-    };
-
-    let onCompiling = () => {
-			clearErrors();
-       var element = document.getElementById("loading-container");
-        element.classList.add("loading");
-
-		window.parent.postMessage({ type: "compileStatus.clear" });
-    };
-
-    let onRender = () => {
-       document.getElementById("loading-container").classList.remove("loading");
-    };
-
-    let errors = [];
-
-    let updateErrorUI = (errors) => {
-        let errorContainer = document.getElementById("error-container");   
-        errorContainer.innerHTML = "";
-
-        let errorElements = errors.map((e) => {
-            let span = document.createElement("p");
-            span.textContent = "Error " + e.startLineNumber + "," + e.startColumn + " - " + e.endLineNumber + "," + e.endColumn + ":" + e.message;
-            return span;
-        });
-        errorElements.forEach(e => errorContainer.appendChild(e));
-
-        if (errorElements.length >= 1) {
-           errorContainer.classList.add("errors"); 
-        }
-    };
-
-    let onError = (err) => {
-        errors.push(err);
-        updateErrorUI(errors);
-        window.parent.postMessage({
-            type: "errors.append", 
-            payload: [err],
-        });
-    };
-
-    let onOutput = (e) => {
-    };
-
-	let onCompilationResult = (r) => {
-		window.parent.postMessage({ type: "compileStatus.append", payload: r });
-	};
-
-
-    let onSyntaxChanged = (newCode) => {
-        window.parent.postMessage({
-            type: "syntax.change", 
-            code: newCode,
-        });
-    };
-
-       let [updateCode, setSyntax] = startRenderer(onCompiling, onRender, onOutput, onSyntaxChanged, onError, onCompilationResult);
-
-
-        window.addEventListener("message", (msg) => {
-            if (msg.data.type === "editor.update") {
-                console.log("Got code update!");
-                updateCode(msg.data.payload);
-            } else if (msg.data.type === "editor.setSyntax") {
-                console.log("Got editor.setSyntax message");
-                setSyntax(msg.data.payload);
-            }
-        });
-    </script>
+<script src="playground.js"></script>
 </html>

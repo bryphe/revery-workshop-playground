@@ -25,16 +25,19 @@ module ToWorker = {
     | Measurements(list(nodeMeasurement))
     | KeyboardEvent(Revery_Core.Events.internalKeyboardEvent)
     | MouseEvent(Revery_Core.Events.internalMouseEvents)
-    | SetSyntax(Syntax.t);
+    | SetSyntax(Syntax.t)
+    | RequestCompletions(int, Js.t(Js.js_string));
 };
 
 module ToRenderer = {
   type t =
+    | Initialized
     | Ready
-    | Compiling
+    | Compiling(Core.Evaluate.evalId)
     | Output(Js.t(Js.Unsafe.any))
     | PhraseResult(Core.Evaluate.result)
     | CompilationResult(Core.Evaluate.evalResult)
     | Updates(list(Types.updates))
-    | SyntaxChanged(Js.t(Js.js_string));
+    | SyntaxChanged(Js.t(Js.js_string))
+    | Completions(int, Js.t(Js.js_array(Js.t(Js.js_string))));
 };

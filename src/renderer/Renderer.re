@@ -6,6 +6,9 @@ open Js_of_ocaml;
 open PlaygroundLib;
 open PlaygroundLib.Types;
 
+let log = msg => print_endline("[Compiler] " ++ msg);
+let error = msg => prerr_endline("[Compiler] " ++ msg);
+
 let rootNode: ref(option(viewNode)) = ref(None);
 
 let createNode = nodeType =>
@@ -84,29 +87,30 @@ let visitUpdate = u =>
     ();
   | SetImageSrc(id, src) =>
     let imageNode = Obj.magic(nodeFromId(id));
-    print_endline("Renderer: setting src: " ++ src);
     let _ = imageNode#setSrc(src);
+    ();
+  | SetImageResizeMode(id, rm) =>
+    let imageNode = Obj.magic(nodeFromId(id));
+    let _ = imageNode#setResizeMode(rm);
     ();
   | _ => ()
   };
 
 let update = (v: list(updates)) => {
-  /* print_endline("Got updates: "); */
   /* Types.showAll(v); */
-  List.iter(
-    visitUpdate,
-    v,
-  );
+  List.iter(visitUpdate, v);
 };
 
 let start =
     (
+      onInitialized,
       onCompiling,
       onReady,
       onOutput,
       onSyntaxChanged,
       onError,
       onCompilationResult,
+      onCompletions,
     ) => {
   let isWorkerReady = ref(false);
   let latestSourceCode: ref(option(Js.t(Js.js_string))) = ref(None);
@@ -133,6 +137,11 @@ let start =
       worker##postMessage(Protocol.ToWorker.SetSyntax(Protocol.Syntax.RE))
     | _ => prerr_endline("setSyntax: Unknown syntax - " ++ str)
     };
+  };
+
+  let requestCompletions = (id: int, v: Js.t(Js.js_string)) => {
+    worker##postMessage(Protocol.ToWorker.RequestCompletions(id, v));
+    ();
   };
 
   let sendMeasurements = () => {
@@ -163,7 +172,7 @@ let start =
     | PhraseResult(v) =>
       switch (v) {
       | Directive(_) => ()
-      | Phrase({blockLoc, blockContent, _}) =>
+      | Phrase({blockLoc, blockContent, evalId}) =>
         switch (blockContent) {
         | BlockStart => ()
         | BlockSuccess(_) => ()
@@ -181,32 +190,45 @@ let start =
           open Core.Loc;
           let startLine = v.locStart.line;
           let endLine = v.locEnd.line;
+          let startCol = v.locStart.col;
+          let endCol = v.locEnd.col;
 
           let js =
-            PhraseCompilationResult.toJs(startLine, endLine, blockContent);
+            PhraseCompilationResult.toJs(
+              evalId,
+              startLine,
+              startCol,
+              endLine,
+              endCol,
+              blockContent,
+            );
           Js.Unsafe.fun_call(onCompilationResult, [|Obj.magic(js)|]);
         };
       }
+    | Completions(id, v) =>
+      let _ =
+        Js.Unsafe.fun_call(onCompletions, [|Obj.magic(id), Obj.magic(v)|]);
+      ();
     | CompilationResult(v) =>
       switch (v) {
-      | Core.Evaluate.EvalSuccess =>
-        prerr_endline("RENDERER: Compilation success")
-      | Core.Evaluate.EvalError => prerr_endline("Compilation error")
-      | Core.Evaluate.EvalInterupted =>
-        prerr_endline("Compilation interrupted")
+      | Core.Evaluate.EvalSuccess(evalId) =>
+        log("Compilation success: " ++ string_of_int(evalId))
+      | Core.Evaluate.EvalError(evalId) =>
+        error("Compilation error: " ++ string_of_int(evalId))
+      | Core.Evaluate.EvalInterupted(_) => error("Compilation interrupted")
       }
-    | Compiling =>
+    | Compiling(evalId) =>
       isWorkerReady := false;
-      print_endline("Compiling...");
-      let _ = Js.Unsafe.fun_call(onCompiling, [||]);
+      log("Compiling: " ++ string_of_int(evalId));
+      let _ = Js.Unsafe.fun_call(onCompiling, [|Obj.magic(evalId)|]);
+      ();
+    | Initialized =>
+      let _ = Js.Unsafe.fun_call(onInitialized, [||]);
       ();
     | Ready =>
       isWorkerReady := true;
-      print_endline("Ready!");
       let _ = Js.Unsafe.fun_call(onReady, [||]);
-      print_endline("Ready called!");
       sendLatestSource();
-      print_endline("Send latest source called!");
     | SyntaxChanged(newCode) =>
       let _ = Js.Unsafe.fun_call(onSyntaxChanged, [|Obj.magic(newCode)|]);
       ();
@@ -352,7 +374,7 @@ let start =
 
   App.start(init);
 
-  Js.array([|ret, setSyntax|]);
+  Js.array([|ret, setSyntax, Obj.magic(requestCompletions)|]);
 };
 
 let () = Js.export_all([%js {val startRenderer = start}]);
