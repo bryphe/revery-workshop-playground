@@ -1,5 +1,5 @@
 (library
- (name PlaygroundLib)
+ (name Playground)
  (public_name playground.lib)
  (libraries Revery js_of_ocaml sketch.core)
  )

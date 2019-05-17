@@ -40,7 +40,7 @@ let esyPath = getEsyPath();
 
 let getReveryRoot = () => {
   return cp
-    .spawnSync(esyPath, ["b", "echo", "#{revery.root}"], {
+    .spawnSync(esyPath, ["b", "echo", "#{revery-workshop.root}"], {
       cwd: playgroundRoot
     })
     .stdout.toString("utf8")
@@ -60,7 +60,7 @@ let convertSyntax = filePath => {
 let reveryRoot = getReveryRoot();
 
 console.log ("Revery root: " + reveryRoot);
-let reveryExampleSources = path.join(__dirname, "examples");
+let reveryExampleSources = reveryRoot;
 
 let getShortCommit = () => {
   let result = cp.execSync("git rev-parse --short HEAD");
@@ -107,6 +107,13 @@ const filesToCopyToRoot = [
 
 const examplesToCopy = [
     "1-intro",
+	"2-components",
+	"3-world",
+	"4-bird",
+	"5-obstacles",
+	"6-scoring",
+	"7-gameplay",
+	"8-completed"
 ];
 
 let artifactFolder = getBuildArtifactFolder();

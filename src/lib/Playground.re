@@ -13,3 +13,7 @@ module Worker = {
     };
   };
 };
+
+let render = (elem) => {
+	Worker.setRenderFunction(() => elem);
+};

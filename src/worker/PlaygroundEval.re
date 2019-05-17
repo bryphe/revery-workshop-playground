@@ -4,16 +4,10 @@ open Js_of_ocaml_toplevel;
 open Revery;
 open Revery.UI;
 
-open PlaygroundLib;
-open PlaygroundLib.Types;
+open Playground;
+open Playground.Types;
 
-PlaygroundLib.Worker.handler := Some(Backend.setRenderFunction);
-
-let postfix = () =>
-  switch (Repl.SyntaxControl.current()) {
-  | Core.Syntax.RE => "\nPlaygroundLib.Worker.setRenderFunction(render);"
-  | Core.Syntax.ML => "\n;;PlaygroundLib.Worker.setRenderFunction render;;"
-  };
+Playground.Worker.handler := Some(Backend.setRenderFunction);
 
 let phraseTerminator = () =>
   switch (Repl.SyntaxControl.current()) {
@@ -59,7 +53,6 @@ let complete = code => {
 };
 
 let execute = (~send, ~complete, code) => {
-  let code = code ++ postfix();
 
   previous :=
     Repl.Evaluate.eval(

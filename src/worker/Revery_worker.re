@@ -1,7 +1,7 @@
 open Js_of_ocaml;
 open Js_of_ocaml_toplevel;
 
-open Playground;
+open PlaygroundEval;
 open Worker;
 
 let log = v => print_endline("[Worker] " ++ v);

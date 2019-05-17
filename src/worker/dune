@@ -1,6 +1,6 @@
 (executable
  (name Revery_worker)
- (modules Revery_worker refmtJsApi Playground Backend reason_util)
+ (modules Revery_worker refmtJsApi PlaygroundEval Backend reason_util)
  (flags :standard -safe-string -rectypes -custom)
  (modes byte)
  (link_flags (:standard -linkall))

@@ -3,8 +3,8 @@ open Revery.Draw;
 open Revery.Math;
 open Revery.UI;
 open Js_of_ocaml;
-open PlaygroundLib;
-open PlaygroundLib.Types;
+open Playground;
+open Playground.Types;
 
 let log = msg => print_endline("[Compiler] " ++ msg);
 let error = msg => prerr_endline("[Compiler] " ++ msg);

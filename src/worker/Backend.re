@@ -1,8 +1,8 @@
 open Revery;
 open Revery.UI;
 
-open PlaygroundLib;
-open PlaygroundLib.Types;
+open Playground;
+open Playground.Types;
 
 open Js_of_ocaml;
 
