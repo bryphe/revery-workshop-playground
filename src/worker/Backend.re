@@ -78,7 +78,6 @@ class proxyImageNode (src) = {
     super#removeChild(child);
   };
   pub! setSrc = src => {
-    print_endline ("WORKER - set src: " ++ (src));
     queueUpdate(SetImageSrc(super#getInternalId(), src));
     super#setSrc(src);
   };
