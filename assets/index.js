@@ -1,10 +1,12 @@
+let cacheKey = "__revery_workshop_cache";
+
 const getCachedCode = () => {
   const defaultItem = {
     syntax: "re",
-    exampleId: "Hello",
+    exampleId: "1-intro",
     code: null
   };
-  let cachedItem = localStorage.getItem("__revery_playground_cache");
+  let cachedItem = localStorage.getItem(cacheKey);
   try {
     cachedItem = !!cachedItem ? JSON.parse(cachedItem) : defaultItem;
   } catch (ex) {
@@ -17,7 +19,7 @@ const getCachedCode = () => {
 
 const setCachedCode = (exampleId, syntax, code) => {
   localStorage.setItem(
-    "__revery_playground_cache",
+    cacheKey,
     JSON.stringify({
       exampleId: exampleId,
       code: code,
@@ -333,7 +335,7 @@ const startEditor = onComplete => {
   }
 
   if (!cacheInfo.code) {
-    fetchLatestSources("Hello");
+    fetchLatestSources("1-intro");
   } else {
     window.__revery_latest_sources = cacheInfo.code;
     window.__revery_editor_set(cacheInfo.code);
